@@ -69,8 +69,9 @@ $(function() {
 
   App.prototype._handleBackgroundLoadPhotosComplete = function(photos) {
     App.L('Photos loaded');
+    App.L(photos);
     photos.forEach(function(photo) {
-      $('#momenove').attr('src', photo.source);
+      // TODO: Implement photo cache
     });
   };
 
