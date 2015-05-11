@@ -22,6 +22,7 @@ $(function() {
   ImageCache.prototype.replace = function(url, callback) {
     if (localStorage['momenove-img-url'] !== url) {
       this._convertImgToBase64(url, function(dataURL) {
+        localStorage['momenove-img-url'] = url;
         localStorage['momenove-img-cache'] = dataURL;
         callback(dataURL);
       });
@@ -56,7 +57,7 @@ $(function() {
 
   /**
    * Application entry
-   *
+   * 
    * @class  App
    */
   function App() {
