@@ -1,6 +1,66 @@
 $(function() {
+  
+  /**
+   * Image Cache
+   *
+   * @class  ImageCache
+   */
+  function ImageCache() {
+    if (!('momenove-img-cache' in localStorage)) {
+      localStorage['momenove-img-cache'] = '';
+      localStorage['momenove-img-url'] = '';
+    }
+  }
 
+  /**
+   * Download image and replace the cached version
+   * 
+   * @param  {String}   url      [description]
+   * @param  {Function} callback [description]
+   * @return {Base64Blob}            [description]
+   */
+  ImageCache.prototype.replace = function(url, callback) {
+    if (localStorage['momenove-img-url'] !== url) {
+      this._convertImgToBase64(url, function(dataURL) {
+        localStorage['momenove-img-cache'] = dataURL;
+        callback(dataURL);
+      });
+    }
+    else {
+      callback(localStorage['momenove-img-cache']);
+    }
+  };
+
+  ImageCache.prototype.getCachedImage = function() {
+    return localStorage['momenove-img-cache'];
+  };
+
+
+  ImageCache.prototype._convertImgToBase64 = function(url, callback){
+    var canvas = document.createElement('canvas');
+    var ctx = canvas.getContext('2d');
+    var img = new Image;
+    img.crossOrigin = 'Anonymous';
+    img.onload = function(){
+      canvas.height = img.height;
+      canvas.width = img.width;
+        ctx.drawImage(img,0,0);
+        var dataURL = canvas.toDataURL('image/png');
+        callback.call(this, dataURL);
+          // Clean up
+        canvas = null; 
+    };
+    img.src = url;
+  };
+
+
+  /**
+   * Application entry
+   *
+   * @class  App
+   */
   function App() {
+    this._wakeFromCache();
     this._initEventListeners();
     this._initBackground();
   }
@@ -11,9 +71,18 @@ $(function() {
     debug: true
   };
 
+  App.imageCache = new ImageCache();
+
   App.L = function(log) {
     if (App.config.debug) {
       console.log(log);
+    }
+  };
+
+  App.prototype._wakeFromCache = function() {
+    var cachedImage = App.imageCache.getCachedImage();
+    if (cachedImage) {
+      $('#momenove').attr('src', cachedImage);
     }
   };
 
@@ -70,8 +139,15 @@ $(function() {
   App.prototype._handleBackgroundLoadPhotosComplete = function(photos) {
     App.L('Photos loaded');
     App.L(photos);
-    photos.forEach(function(photo) {
-      // TODO: Implement photo cache
+    var photo;
+    if (photos.length > 0) {
+      photo = photos[0];
+    }
+    else {
+      return;
+    }
+    App.imageCache.replace(photo.source, function(dataURL) {
+      $('#momenove').attr('src', dataURL);
     });
   };
 
